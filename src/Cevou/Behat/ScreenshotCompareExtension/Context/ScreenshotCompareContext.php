@@ -39,11 +39,17 @@ class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompa
         $result = $actualScreenshot->compareImages($compareScreenshot, \Imagick::METRIC_ROOTMEANSQUAREDERROR);
 
         if ($result[1] > 0) {
+            if (!file_exists($targetDir)) {
+                mkdir($targetDir, 0777, true);
+            }
+
             $diffFileName = $targetDir . DIRECTORY_SEPARATOR . sprintf('%s_%s.%s', $this->getMinkParameter('browser_name'), date('d-m-y-H-i-s'), 'png');
+
             /** @var \Imagick $diffScreenshot */
             $diffScreenshot = $result[0];
             $diffScreenshot->setImageFormat("png");
             file_put_contents($diffFileName, $diffScreenshot, LOCK_EX);
+
             throw new \ImagickException(sprintf("Files are not equal. Diff saved to %s", $diffFileName));
         }
     }
