@@ -10,5 +10,11 @@ default:
             sessions:
                 default:
                     selenium2: ~
-        Cevou\Behat\ScreenshotCompareExtension: ~
+        Cevou\Behat\ScreenshotCompareExtension:
+            adapter: 'default'
+            adapters:
+                default:
+                    local:
+                        directory: %paths.base%/compared_screens
+                        create: true
 

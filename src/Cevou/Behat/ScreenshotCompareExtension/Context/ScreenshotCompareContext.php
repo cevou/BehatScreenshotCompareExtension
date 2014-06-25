@@ -2,12 +2,14 @@
 
 namespace Cevou\Behat\ScreenshotCompareExtension\Context;
 
-use Behat\Mink\Mink;
 use Behat\MinkExtension\Context\RawMinkContext;
+use Gaufrette\Filesystem;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompareAwareContext
 {
+    /** @var  Filesystem */
+    private $screenshotCompareFilesystem;
     private $screenshotCompareParameters;
 
     /**
@@ -18,8 +20,6 @@ class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompa
     public function assertScreenshotCompare($fileName)
     {
         $screenshotDir = $this->screenshotCompareParameters['screenshot_dir'];
-        $targetDir = $this->screenshotCompareParameters['target_dir'];
-
         $compareFile = $screenshotDir . DIRECTORY_SEPARATOR . $fileName;
 
         if (!file_exists($compareFile)) {
@@ -39,19 +39,23 @@ class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompa
         $result = $actualScreenshot->compareImages($compareScreenshot, \Imagick::METRIC_ROOTMEANSQUAREDERROR);
 
         if ($result[1] > 0) {
-            if (!file_exists($targetDir)) {
-                mkdir($targetDir, 0777, true);
-            }
-
-            $diffFileName = $targetDir . DIRECTORY_SEPARATOR . sprintf('%s_%s.%s', $this->getMinkParameter('browser_name'), date('d-m-y-H-i-s'), 'png');
+            $diffFileName = sprintf('%s_%s.%s', $this->getMinkParameter('browser_name'), date('d-m-y-H-i-s'), 'png');
 
             /** @var \Imagick $diffScreenshot */
             $diffScreenshot = $result[0];
             $diffScreenshot->setImageFormat("png");
-            file_put_contents($diffFileName, $diffScreenshot, LOCK_EX);
+            $this->screenshotCompareFilesystem->write($diffFileName, $diffScreenshot);
 
             throw new \ImagickException(sprintf("Files are not equal. Diff saved to %s", $diffFileName));
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setScreenshotCompareFilesystem(Filesystem $filesystem)
+    {
+        $this->screenshotCompareFilesystem = $filesystem;
     }
 
     /**
