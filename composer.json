@@ -20,7 +20,6 @@
     },
     "require-dev": {
         "behat/mink-selenium2-driver": "~1.0",
-        "emagister/selenium-server": "*",
         "phpspec/phpspec": "~2.0",
         "bossa/phpspec2-expect": "~1.0",
         "symfony/process": "~2.5"

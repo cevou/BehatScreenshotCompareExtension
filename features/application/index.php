@@ -9,6 +9,7 @@
             border: <?php echo isset($_GET['borderwidth']) ? $_GET['borderwidth'] : 1;?>px solid #000000;
             width: 200px;
             height: 200px;
+            box-sizing: border-box;
         }
     </style>
 </head>

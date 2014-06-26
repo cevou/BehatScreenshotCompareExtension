@@ -4,5 +4,4 @@ default:
             contexts:
                 - BehatRunnerContext
                 - PhpServerContext
-                - SeleniumServerContext
 
