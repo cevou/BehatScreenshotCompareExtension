@@ -18,7 +18,7 @@ class SeleniumServerContext implements Context
         self::$seleniumServer = new Process('java -jar  vendor/emagister/selenium-server/bin/selenium-server.jar');
         self::$seleniumServer->start();
 
-        sleep(1);
+        sleep(4);
     }
 
     /**
