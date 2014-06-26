@@ -14,8 +14,7 @@ before_install:
 before_script:
   - printf "\n" | pecl install imagick
   - composer install --prefer-source
-  - export PATH=./vendor/bin:$PATH
 
 script:
-  - phpspec run -f pretty
-  - behat -fprogress --strict
+  - ./bin/phpspec run -f pretty
+  - ./bin/behat --format=progress
