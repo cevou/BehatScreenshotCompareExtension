@@ -3,8 +3,8 @@ Screenshot Compare Extension
 
 Behat extension providing tools to compare screenshots.
 
-[![Build Status](https://secure.travis-ci.org/sensiolabs/BehatPageObjectExtension.png?branch=master)](http://travis-ci.org/sensiolabs/BehatPageObjectExtension)
+[![Build Status](https://secure.travis-ci.org/cevou/BehatScreenshotCompareExtension.png?branch=master)](http://travis-ci.org/cevou/BehatScreenshotCompareExtension)
 
 ## Documentation
 
-[Official documentation](http://extensions.behat.org/page-object/)
+[Official documentation](doc/index.rst)

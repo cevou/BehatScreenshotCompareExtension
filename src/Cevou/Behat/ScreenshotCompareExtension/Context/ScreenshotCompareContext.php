@@ -3,12 +3,13 @@
 namespace Cevou\Behat\ScreenshotCompareExtension\Context;
 
 use Behat\MinkExtension\Context\RawMinkContext;
-use Gaufrette\Filesystem;
+use Gaufrette\Filesystem as GaufretteFilesystem;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompareAwareContext
 {
-    /** @var  Filesystem */
+    /** @var  GaufretteFilesystem */
     private $screenshotCompareFilesystem;
     private $screenshotCompareParameters;
 
@@ -22,7 +23,8 @@ class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompa
         $screenshotDir = $this->screenshotCompareParameters['screenshot_dir'];
         $compareFile = $screenshotDir . DIRECTORY_SEPARATOR . $fileName;
 
-        if (!file_exists($compareFile)) {
+        $filesystem = new SymfonyFilesystem();
+        if (!$filesystem->exists($compareFile)) {
             throw new FileNotFoundException(null, 0, null, $compareFile);
         }
 
@@ -53,7 +55,7 @@ class ScreenshotCompareContext extends RawMinkContext implements ScreenshotCompa
     /**
      * {@inheritdoc}
      */
-    public function setScreenshotCompareFilesystem(Filesystem $filesystem)
+    public function setScreenshotCompareFilesystem(GaufretteFilesystem $filesystem)
     {
         $this->screenshotCompareFilesystem = $filesystem;
     }
