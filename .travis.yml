@@ -9,6 +9,8 @@ php:
 before_install:
   - phantomjs --version
   - phantomjs --webdriver=4444 > /tmp/webdriver_output.txt &
+  - npm install -g http-server
+  - http-server -p 8000 features/application &
 
 before_script:
   - printf "\n" | pecl install imagick

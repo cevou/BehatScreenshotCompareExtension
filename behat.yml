@@ -3,5 +3,4 @@ default:
         default:
             contexts:
                 - BehatRunnerContext
-                - PhpServerContext
 

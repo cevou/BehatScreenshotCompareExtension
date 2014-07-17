@@ -3,3 +3,4 @@ bin
 compared_screens
 vendor
 composer.lock
+*.*~
