@@ -53,7 +53,8 @@ The easiest way to keep your suite updated is to use `Composer <http://getcompos
           extensions:
             Cevou\Behat\ScreenshotCompareExtension:
               screenshot_dir: %paths.base%/features/screenshots
-              adapter: default
+              sessions:
+                default: ~
               adapters:
                 default:
                   local:
@@ -62,9 +63,16 @@ The easiest way to keep your suite updated is to use `Composer <http://getcompos
 Usage
 -----
 
-After installing extension, there would be 2 usage options available for you:
+After installing extension, there would be 3 usage options available for you:
+-
+1. Extending ``Cevou\Behat\ScreenshotCompareExtension\Context\RawScreenshotCompareContext`` in your feature suite.
+   This will give you ability to use the compare screenshot functionality in your context. Just call
+   ``compareScreenshot($sessionName, $fileName)``.
 
-1. Extending ``Cevou\Behat\ScreenshotCompareExtension\Context\ScreenshotCompareContext``
+   ``RawScreenshotCompareContext`` doesn't provide any hooks or definitions, so you can inherit from it
+   in as many contexts as you want - you'll never get ``RedundantStepException``.
+
+2. Extending ``Cevou\Behat\ScreenshotCompareExtension\Context\ScreenshotCompareContext``
    with one of your contexts. As this context provides step definitions and hooks, you can
    use it **only once** inside your feature context tree.
 
@@ -85,7 +93,7 @@ After installing extension, there would be 2 usage options available for you:
         It will cause ``RedundantException``. So, you can inherit from ``ScreenshotCompareContext``
         only with one of your context/subcontext classes.
 
-2. Adding ``Cevou\Behat\ScreenshotCompareExtension\Context\ScreenshotCompareContext`` as context in
+3. Adding ``Cevou\Behat\ScreenshotCompareExtension\Context\ScreenshotCompareContext`` as context in
    your suite. Exactly like previous option, but gives you ability to keep your main context
    class clean.
 
@@ -115,14 +123,16 @@ Adapters
 --------
 
 You can register as many Gaufrette adapters as you want. You will need to choose one
-adapter you want to use.
+adapter you want to use for a specific session.
 
 .. code-block:: yaml
 
     default:
         extensions:
             Cevou\Behat\ScreenshotCompareExtension:
-                adapter: 'first_adapter'
+                sessions:
+                    default:
+                        adapter: 'first_adapter'
                 adapters:
                     first_adapter:
                         local: ~
@@ -131,7 +141,8 @@ adapter you want to use.
                     third_adapter:
                         ftp: ~
 
-You need to specify which adapter should be used in your tests using the adapter property.
+You need to specify which adapter should be used in your tests using the adapter property. By default the adapter called
+``default`` is used.
 
 Adapters
 ~~~~~~~~
@@ -191,3 +202,5 @@ Additional Parameters
 There's other useful parameters, that you can use to configure your suite:
 
 * ``screenshot_dir`` - the directory where the extension will look for the fixture screenshots
+* ``session.crop.(left|top|right|bottom)`` - you can crop the image that is returned from the browser (for example to remove a
+browser header which is part of the screenshot)

@@ -62,24 +62,36 @@ class ScreenshotCompareExtension implements ExtensionInterface
             ->addDefaultsIfNotSet()
             ->children()
                 ->scalarNode('screenshot_dir')->defaultValue('%paths.base%/features/screenshots')->end()
-                ->scalarNode('adapter')->isRequired()->end()
-                ->end()
             ->end()
         ->end();
 
         $adapterNodeBuilder = $builder
             ->children()
-            ->arrayNode('adapters')
-            ->useAttributeAsKey('name')
-            ->prototype('array')
-            ->performNoDeepMerging()
-            ->children()
+                ->arrayNode('adapters')
+                    ->useAttributeAsKey('name')
+                    ->prototype('array')
+                    ->performNoDeepMerging()
+                    ->children()
         ;
 
         foreach ($this->adapterFactories as $name => $factory) {
             $factoryNode = $adapterNodeBuilder->arrayNode($name)->canBeUnset();
             $factory->addConfiguration($factoryNode);
         }
+
+        $builder
+            ->children()
+                ->arrayNode('sessions')
+                    ->useAttributeAsKey('name')
+                    ->prototype('array')
+                    ->children()
+                        ->scalarNode('adapter')->defaultValue('default')->end()
+                        ->arrayNode('crop')
+                            ->children()
+                                ->integerNode('left')->defaultValue(0)->min(0)->end()
+                                ->integerNode('right')->defaultValue(0)->min(0)->end()
+                                ->integerNode('top')->defaultValue(0)->min(0)->end()
+                                ->integerNode('bottom')->defaultValue(0)->min(0)->end();
 
     }
 
@@ -89,7 +101,7 @@ class ScreenshotCompareExtension implements ExtensionInterface
     private function loadContextInitializer(ContainerBuilder $container)
     {
         $definition = new Definition('Cevou\Behat\ScreenshotCompareExtension\Context\Initializer\ScreenshotCompareAwareInitializer', array(
-            '%screenshot_compare.filesystem%',
+            '%screenshot_compare.session_configurations%',
             '%screenshot_compare.parameters%'
         ));
         $definition->addTag(ContextExtension::INITIALIZER_TAG, array('priority' => 0));
@@ -105,19 +117,31 @@ class ScreenshotCompareExtension implements ExtensionInterface
     {
         $adapters = array();
 
-        foreach ($config['adapters'] as $name => $adapter) {
-            $adapters[$name] = $this->createAdapter($name, $adapter, $container, $this->adapterFactories);
-        }
-
-        if (!array_key_exists($config['adapter'], $adapters)) {
-            throw new \LogicException(sprintf('The adapter \'%s\' is not defined.', $config['adapter']));
-        }
-
-        $adapter = $adapters[$config['adapter']];
         $id = 'gaufrette.screenshot_filesystem';
 
-        $container->setDefinition($id, new Definition('Gaufrette\\Filesystem', array(new Reference($adapter))));
-        $container->setParameter('screenshot_compare.filesystem', new Reference($id));
+        foreach ($config['adapters'] as $name => $adapter) {
+            $adapter_id = $id . '_' . $name;
+            $adapter = $this->createAdapter($name, $adapter, $container, $this->adapterFactories);
+            $container->setDefinition($adapter_id, new Definition('Gaufrette\\Filesystem', array(new Reference($adapter))));
+            $adapters[$name] = new Reference($adapter_id);
+        }
+
+        $sessionConfigurations = array();
+
+        foreach ($config['sessions'] as $name => $session) {
+            $sessionConfiguration = array();
+
+            if (!array_key_exists($session['adapter'], $adapters)) {
+                throw new \LogicException(sprintf('The adapter \'%s\' is not defined.', $session['adapter']));
+            }
+            $sessionConfiguration['adapter'] = $adapters[$session['adapter']];
+            if (isset($session['crop'])) {
+                $sessionConfiguration['crop'] = $session['crop'];
+            }
+            $sessionConfigurations[$name] = $sessionConfiguration;
+        }
+
+        $container->setParameter('screenshot_compare.session_configurations', $sessionConfigurations);
     }
 
     /**

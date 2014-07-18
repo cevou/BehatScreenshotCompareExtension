@@ -57,7 +57,14 @@ default:
         - Behat\MinkExtension\Context\MinkContext
   extensions:
     Cevou\Behat\ScreenshotCompareExtension:
-      adapter: 'default'
+      sessions:
+        default: ~
+        crop:
+          crop:
+            left: 8
+            top: 8
+            bottom: 92
+            right: 192
       adapters:
         default:
           local:
@@ -66,11 +73,32 @@ default:
       sessions:
         default:
           selenium2: ~
+        crop:
+          selenium2: ~
       base_url: http://localhost:8000
 CONFIG;
 
         $content = new PyStringNode(explode("\n", $config), 0);
         $this->getFilesystem()->dumpFile($this->workingDir.'/behat.yml', $content->getRaw());
+    }
+
+    /**
+     * @Given /^a feature file that opens the url "(?P<url>[^"]*)" and compares it to "(?P<file>[^"]*)" with tag "(?P<tag>[^"]*)"$/
+     */
+    public function aFeatureFileWhichOpensUrlAndComparesToScreenshotWithTag($url, $file, $tag)
+    {
+        $feature = <<<FEATURE
+Feature: Take a screenshot of an application and compare it with a previous taken screenshot
+
+  $tag
+  Scenario: Compare correct page with screenshot
+    Given I am on "$url"
+    Then the screenshot should be equal to "$file"
+FEATURE;
+
+        $this->getFilesystem()->copy(__DIR__ . '/../screenshots/' . $file, $this->workingDir.'/features/screenshots/'.$file);
+        $content = new PyStringNode(explode("\n", $feature), 0);
+        $this->getFilesystem()->dumpFile($this->workingDir.'/features/compare_screenshot.feature', $content->getRaw());
     }
 
     /**

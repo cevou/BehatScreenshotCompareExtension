@@ -12,3 +12,9 @@ Feature: Take a screenshot of an application and compare it with a previous take
     And a feature file that opens the url "/box10.html" and compares it to "test.png"
     When I run behat
     Then it should fail
+
+  Scenario: Compare correct cropped page with screenshot
+    Given I configured the screenshot compare extension
+    And a feature file that opens the url "/box.html" and compares it to "test2.png" with tag "@mink:crop"
+    When I run behat
+    Then it should pass

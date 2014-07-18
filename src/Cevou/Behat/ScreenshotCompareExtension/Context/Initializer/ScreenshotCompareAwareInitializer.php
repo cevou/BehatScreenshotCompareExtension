@@ -5,23 +5,22 @@ namespace Cevou\Behat\ScreenshotCompareExtension\Context\Initializer;
 use Behat\Behat\Context\Context;
 use Behat\Behat\Context\Initializer\ContextInitializer;
 use Cevou\Behat\ScreenshotCompareExtension\Context\ScreenshotCompareAwareContext;
-use Gaufrette\Filesystem;
 
 class ScreenshotCompareAwareInitializer implements ContextInitializer
 {
 
-    private $filesystem;
+    private $configurations;
     private $parameters;
 
     /**
      * Initializes initializer.
      *
-     * @param Filesystem $filesystem
+     * @param array $configurations
      * @param array $parameters
      */
-    public function __construct(Filesystem $filesystem, array $parameters)
+    public function __construct(array $configurations, array $parameters)
     {
-        $this->filesystem = $filesystem;
+        $this->configurations = $configurations;
         $this->parameters = $parameters;
     }
 
@@ -34,7 +33,7 @@ class ScreenshotCompareAwareInitializer implements ContextInitializer
             return;
         }
 
-        $context->setScreenshotCompareFilesystem($this->filesystem);
+        $context->setScreenshotCompareConfigurations($this->configurations);
         $context->setScreenshotCompareParameters($this->parameters);
     }
 
