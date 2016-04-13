@@ -9,8 +9,8 @@ use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 class RawScreenshotCompareContext extends RawMinkContext implements ScreenshotCompareAwareContext
 {
-    private $screenshotCompareConfigurations;
-    private $screenshotCompareParameters;
+    protected $screenshotCompareConfigurations;
+    protected $screenshotCompareParameters;
 
     /**
      * {@inheritdoc}
