@@ -65,6 +65,17 @@ default:
             top: 8
             bottom: 92
             right: 192
+      screenshot_config:
+        breakpoints:
+          desktop:
+            width: 1169
+            height: 500
+          tablet:
+            width: 960
+            height: 500
+          phone:
+            width: 560
+            height: 500
       adapters:
         default:
           local:
@@ -196,4 +207,4 @@ FEATURE;
 
         return $php;
     }
-} 
+}

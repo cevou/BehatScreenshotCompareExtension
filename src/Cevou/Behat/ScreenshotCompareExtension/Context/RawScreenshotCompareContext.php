@@ -28,7 +28,15 @@ class RawScreenshotCompareContext extends RawMinkContext implements ScreenshotCo
         $this->screenshotCompareParameters = $parameters;
     }
 
-    /**
+    public function getScreenshotParameters() {
+      return $this->screenshotCompareParameters;
+    }
+
+  public function getScreenshotConfiguration() {
+    return $this->screenshotCompareConfigurations;
+  }
+
+  /**
      * @param $sessionName
      * @param $fileName
      * @throws \LogicException

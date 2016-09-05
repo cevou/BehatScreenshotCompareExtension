@@ -14,171 +14,172 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
-class ScreenshotCompareExtension implements ExtensionInterface
-{
+class ScreenshotCompareExtension implements ExtensionInterface {
 
-    /**
-     * @var AdapterFactory[]
-     */
-    private $adapterFactories = array();
+  /**
+   * @var AdapterFactory[]
+   */
+  private $adapterFactories = [];
 
-    function __construct()
-    {
-        $this->registerAdapterFactory(new LocalAdapterFactory());
-        $this->registerAdapterFactory(new SafeLocalAdapterFactory());
-        $this->registerAdapterFactory(new FtpAdapterFactory());
+  function __construct() {
+    $this->registerAdapterFactory(new LocalAdapterFactory());
+    $this->registerAdapterFactory(new SafeLocalAdapterFactory());
+    $this->registerAdapterFactory(new FtpAdapterFactory());
+  }
+
+  public function registerAdapterFactory(AdapterFactory $adapterFactory) {
+    $this->adapterFactories[$adapterFactory->getKey()] = $adapterFactory;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfigKey() {
+    return 'screenshot_compare';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function load(ContainerBuilder $container, array $config) {
+    $container->setParameter('screenshot_compare.parameters', $config);
+
+    $this->loadAdaptersAndCreateFilesystem($container, $config);
+    $this->loadContextInitializer($container);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function configure(ArrayNodeDefinition $builder) {
+    $builder
+      ->addDefaultsIfNotSet()
+      ->children()
+      ->scalarNode('screenshot_dir')->defaultValue('%paths.base%/features/screenshots')->end()
+      ->end()
+      ->end();
+
+    $adapterNodeBuilder = $builder
+      ->children()
+      ->arrayNode('adapters')
+      ->useAttributeAsKey('name')
+      ->prototype('array')
+      ->performNoDeepMerging()
+      ->children();
+
+    foreach ($this->adapterFactories as $name => $factory) {
+      $factoryNode = $adapterNodeBuilder->arrayNode($name)->canBeUnset();
+      $factory->addConfiguration($factoryNode);
     }
 
-    public function registerAdapterFactory(AdapterFactory $adapterFactory)
-    {
-        $this->adapterFactories[$adapterFactory->getKey()] = $adapterFactory;
+    $builder
+      ->children()
+      ->arrayNode('screenshot_config')
+      ->children()
+      ->arrayNode('breakpoints')
+      ->useAttributeAsKey('name')
+      ->prototype('array')
+      ->children()
+      ->integerNode('width')->end()
+      ->integerNode('height')->end();
+
+    $builder
+      ->children()
+      ->arrayNode('sessions')
+      ->useAttributeAsKey('name')
+      ->prototype('array')
+      ->children()
+      ->scalarNode('adapter')->defaultValue('default')->end()
+      ->arrayNode('crop')
+      ->children()
+      ->integerNode('left')->defaultValue(0)->min(0)->end()
+      ->integerNode('right')->defaultValue(0)->min(0)->end()
+      ->integerNode('top')->defaultValue(0)->min(0)->end()
+      ->integerNode('bottom')->defaultValue(0)->min(0)->end();
+
+  }
+
+  /**
+   * @param ContainerBuilder $container
+   */
+  private function loadContextInitializer(ContainerBuilder $container) {
+    $definition = new Definition('Cevou\Behat\ScreenshotCompareExtension\Context\Initializer\ScreenshotCompareAwareInitializer', [
+      '%screenshot_compare.session_configurations%',
+      '%screenshot_compare.parameters%',
+    ]);
+    $definition->addTag(ContextExtension::INITIALIZER_TAG, ['priority' => 0]);
+    $container->setDefinition('screenshot_compare.context_initializer', $definition);
+  }
+
+  /**
+   * @param ContainerBuilder $container
+   * @param array $config
+   *
+   * @throws \LogicException
+   */
+  private function loadAdaptersAndCreateFilesystem(ContainerBuilder $container, array $config) {
+    $adapters = [];
+
+    $id = 'gaufrette.screenshot_filesystem';
+
+    foreach ($config['adapters'] as $name => $adapter) {
+      $adapter_id = $id . '_' . $name;
+      $adapter = $this->createAdapter($name, $adapter, $container, $this->adapterFactories);
+      $container->setDefinition($adapter_id, new Definition('Gaufrette\\Filesystem', [new Reference($adapter)]));
+      $adapters[$name] = new Reference($adapter_id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getConfigKey()
-    {
-        return 'screenshot_compare';
+    $sessionConfigurations = [];
+
+    foreach ($config['sessions'] as $name => $session) {
+      $sessionConfiguration = [];
+
+      if (!array_key_exists($session['adapter'], $adapters)) {
+        throw new \LogicException(sprintf('The adapter \'%s\' is not defined.', $session['adapter']));
+      }
+      $sessionConfiguration['adapter'] = $adapters[$session['adapter']];
+      if (isset($session['crop'])) {
+        $sessionConfiguration['crop'] = $session['crop'];
+      }
+      $sessionConfigurations[$name] = $sessionConfiguration;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function load(ContainerBuilder $container, array $config)
-    {
-        $container->setParameter('screenshot_compare.parameters', $config);
+    $container->setParameter('screenshot_compare.session_configurations', $sessionConfigurations);
+  }
 
-        $this->loadAdaptersAndCreateFilesystem($container, $config);
-        $this->loadContextInitializer($container);
+  /**
+   * @param $name
+   * @param array $config
+   * @param ContainerBuilder $container
+   * @param AdapterFactory[] $factories
+   *
+   * @return string
+   * @throws \LogicException
+   */
+  private function createAdapter($name, array $config, ContainerBuilder $container, array $factories) {
+    $adapter = NULL;
+    foreach ($config as $key => $adapter) {
+      if (array_key_exists($key, $factories)) {
+        $id = sprintf('gaufrette.%s_adapter', $name);
+        $factories[$key]->create($container, $id, $adapter);
+
+        return $id;
+      }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function configure(ArrayNodeDefinition $builder)
-    {
-        $builder
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode('screenshot_dir')->defaultValue('%paths.base%/features/screenshots')->end()
-            ->end()
-        ->end();
+    throw new \LogicException(sprintf('The adapter \'%s\' is not configured.', $name));
+  }
 
-        $adapterNodeBuilder = $builder
-            ->children()
-                ->arrayNode('adapters')
-                    ->useAttributeAsKey('name')
-                    ->prototype('array')
-                    ->performNoDeepMerging()
-                    ->children()
-        ;
+  /**
+   * {@inheritdoc}
+   */
+  public function process(ContainerBuilder $container) {
+  }
 
-        foreach ($this->adapterFactories as $name => $factory) {
-            $factoryNode = $adapterNodeBuilder->arrayNode($name)->canBeUnset();
-            $factory->addConfiguration($factoryNode);
-        }
-
-        $builder
-            ->children()
-                ->arrayNode('sessions')
-                    ->useAttributeAsKey('name')
-                    ->prototype('array')
-                    ->children()
-                        ->scalarNode('adapter')->defaultValue('default')->end()
-                        ->arrayNode('crop')
-                            ->children()
-                                ->integerNode('left')->defaultValue(0)->min(0)->end()
-                                ->integerNode('right')->defaultValue(0)->min(0)->end()
-                                ->integerNode('top')->defaultValue(0)->min(0)->end()
-                                ->integerNode('bottom')->defaultValue(0)->min(0)->end();
-
-    }
-
-    /**
-     * @param ContainerBuilder $container
-     */
-    private function loadContextInitializer(ContainerBuilder $container)
-    {
-        $definition = new Definition('Cevou\Behat\ScreenshotCompareExtension\Context\Initializer\ScreenshotCompareAwareInitializer', array(
-            '%screenshot_compare.session_configurations%',
-            '%screenshot_compare.parameters%'
-        ));
-        $definition->addTag(ContextExtension::INITIALIZER_TAG, array('priority' => 0));
-        $container->setDefinition('screenshot_compare.context_initializer', $definition);
-    }
-
-    /**
-     * @param ContainerBuilder $container
-     * @param array $config
-     * @throws \LogicException
-     */
-    private function loadAdaptersAndCreateFilesystem(ContainerBuilder $container, array $config)
-    {
-        $adapters = array();
-
-        $id = 'gaufrette.screenshot_filesystem';
-
-        foreach ($config['adapters'] as $name => $adapter) {
-            $adapter_id = $id . '_' . $name;
-            $adapter = $this->createAdapter($name, $adapter, $container, $this->adapterFactories);
-            $container->setDefinition($adapter_id, new Definition('Gaufrette\\Filesystem', array(new Reference($adapter))));
-            $adapters[$name] = new Reference($adapter_id);
-        }
-
-        $sessionConfigurations = array();
-
-        foreach ($config['sessions'] as $name => $session) {
-            $sessionConfiguration = array();
-
-            if (!array_key_exists($session['adapter'], $adapters)) {
-                throw new \LogicException(sprintf('The adapter \'%s\' is not defined.', $session['adapter']));
-            }
-            $sessionConfiguration['adapter'] = $adapters[$session['adapter']];
-            if (isset($session['crop'])) {
-                $sessionConfiguration['crop'] = $session['crop'];
-            }
-            $sessionConfigurations[$name] = $sessionConfiguration;
-        }
-
-        $container->setParameter('screenshot_compare.session_configurations', $sessionConfigurations);
-    }
-
-    /**
-     * @param $name
-     * @param array $config
-     * @param ContainerBuilder $container
-     * @param AdapterFactory[] $factories
-     * @return string
-     * @throws \LogicException
-     */
-    private function createAdapter($name, array $config, ContainerBuilder $container, array $factories)
-    {
-        $adapter = null;
-        foreach ($config as $key => $adapter) {
-            if (array_key_exists($key, $factories)) {
-                $id = sprintf('gaufrette.%s_adapter', $name);
-                $factories[$key]->create($container, $id, $adapter);
-
-                return $id;
-            }
-        }
-
-        throw new \LogicException(sprintf('The adapter \'%s\' is not configured.', $name));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function process(ContainerBuilder $container)
-    {
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function initialize(ExtensionManager $extensionManager)
-    {
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function initialize(ExtensionManager $extensionManager) {
+  }
 
 }
