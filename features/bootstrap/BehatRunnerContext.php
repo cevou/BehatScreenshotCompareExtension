@@ -85,6 +85,7 @@ default:
           local:
             directory: '%paths.base%/compared_screenshots'
     Behat\MinkExtension:
+      show_cmd: open %s
       browser_name: 'phantomjs'
       sessions:
         default:
@@ -131,6 +132,7 @@ Feature: Take a screenshot of an application and compare it with a previous take
 
   Scenario: Compare correct page with screenshot
     Given I am on "$url"
+    Then show last response
     Then I generate the screenshot "$file"
     Then the screenshot should be equal to "$file"
 FEATURE;
