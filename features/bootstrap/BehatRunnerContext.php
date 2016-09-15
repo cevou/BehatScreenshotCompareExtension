@@ -83,7 +83,7 @@ default:
       adapters:
         default:
           local:
-            directory: '%paths.base%/compared_screenshots'
+            directory: '/Users/rob/Desktop/compared_screenshots'
     Behat\MinkExtension:
       show_cmd: open %s
       browser_name: 'phantomjs'
@@ -92,7 +92,7 @@ default:
           selenium2: ~
         crop:
           selenium2: ~
-      base_url: http://localhost:8000
+      base_url: /Users/rob/Sites/personal/BehatScreenshotCompareExtension/features/application
 CONFIG;
 
         $content = new PyStringNode(explode("\n", $config), 0);
@@ -111,12 +111,14 @@ Feature: Take a screenshot of an application and compare it with a previous take
   $tag
   Scenario: Compare correct page with screenshot
     Given I am on "$url"
-    Then I generate the screenshot "$file"
+    Thendesktop
+phone
+tablet I generate the screenshot "$file"
     Then the screenshot should be equal to "$file"
 FEATURE;
 
         $this->getFilesystem()
-            ->copy(__DIR__ . '/../screenshots/' . $file, $this->workingDir . '/features/screenshots/' . $file);
+            ->copy(__DIR__ . '/../screenshots/', $this->workingDir . '/features/screenshots/');
         $content = new PyStringNode(explode("\n", $feature), 0);
         $this->getFilesystem()
             ->dumpFile($this->workingDir . '/features/compare_screenshot.feature', $content->getRaw());
@@ -132,13 +134,11 @@ Feature: Take a screenshot of an application and compare it with a previous take
 
   Scenario: Compare correct page with screenshot
     Given I am on "$url"
-    Then show last response
-    Then I generate the screenshot "$file"
     Then the screenshot should be equal to "$file"
 FEATURE;
 
         $this->getFilesystem()
-            ->copy(__DIR__ . '/../screenshots/' . $file, $this->workingDir . '/features/screenshots/' . $file);
+            ->mirror(__DIR__ . '/../screenshots', $this->workingDir . '/features/screenshots');
         $content = new PyStringNode(explode("\n", $feature), 0);
         $this->getFilesystem()
             ->dumpFile($this->workingDir . '/features/compare_screenshot.feature', $content->getRaw());

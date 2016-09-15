@@ -36,6 +36,10 @@ class ScreenshotCompareContext extends RawScreenshotCompareContext
                     mkdir($directory, 0777, true);
                 }
                 file_put_contents($full_name, $screenshot);
+                //if (!file_exists('/Users/rob/Desktop/tmp/' . $breakpoint_name . '/')) {
+                //    mkdir('/Users/rob/Desktop/tmp/' . $breakpoint_name . '/', 0777, true);
+                //}
+                //file_put_contents('/Users/rob/Desktop/tmp/' . $breakpoint_name . '/' . $filename, $screenshot);
             } else {
                 throw new ExpectationException(
                     'Tried to generate ' . $full_name . ' but it already exists.',
