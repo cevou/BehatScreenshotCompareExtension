@@ -55,6 +55,17 @@ The easiest way to keep your suite updated is to use `Composer <http://getcompos
               screenshot_dir: %paths.base%/features/screenshots
               sessions:
                 default: ~
+              screenshot_config:
+                breakpoints:
+                  desktop:
+                    width: 1169
+                    height: 500
+                  tablet:
+                    width: 960
+                    height: 500
+                  phone:
+                    width: 560
+                    height: 500
               adapters:
                 default:
                   local:

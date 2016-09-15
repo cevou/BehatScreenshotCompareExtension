@@ -49,6 +49,8 @@ class BehatRunnerContext implements Context
 
     /**
      * @Given /^I configured the screenshot compare extension$/
+     *
+     * @todo: enforce browser_name: 'phantomjs'
      */
     public function iConfiguredTheScreenshotCompareExtension()
     {
@@ -83,16 +85,14 @@ default:
       adapters:
         default:
           local:
-            directory: '/Users/rob/Desktop/compared_screenshots'
+            directory: '%paths.base%/compared_screenshots'
     Behat\MinkExtension:
-      show_cmd: open %s
-      browser_name: 'phantomjs'
       sessions:
         default:
           selenium2: ~
         crop:
           selenium2: ~
-      base_url: /Users/rob/Sites/personal/BehatScreenshotCompareExtension/features/application
+      base_url: http://localhost:8000
 CONFIG;
 
         $content = new PyStringNode(explode("\n", $config), 0);

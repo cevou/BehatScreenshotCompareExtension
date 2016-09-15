@@ -105,7 +105,6 @@ class ScreenshotCompareExtension implements ExtensionInterface
             ->integerNode('right')->defaultValue(0)->min(0)->end()
             ->integerNode('top')->defaultValue(0)->min(0)->end()
             ->integerNode('bottom')->defaultValue(0)->min(0)->end();
-
     }
 
     /**

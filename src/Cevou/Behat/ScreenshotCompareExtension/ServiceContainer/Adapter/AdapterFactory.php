@@ -5,7 +5,8 @@ namespace Cevou\Behat\ScreenshotCompareExtension\ServiceContainer\Adapter;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-interface AdapterFactory {
+interface AdapterFactory
+{
 
     /**
      * Creates the adapter, registers it and returns its id
@@ -29,5 +30,4 @@ interface AdapterFactory {
      * @param  NodeDefinition $builder
      */
     function addConfiguration(NodeDefinition $builder);
-
-} 
+}
