@@ -51,12 +51,13 @@ class RawScreenshotCompareContext extends RawMinkContext implements ScreenshotCo
         // Get the current session and config.
         $this->assertSession($sessionName);
         $session = $this->getSession($sessionName);
-        if (!array_key_exists($sessionName, $this->screenshotCompareConfigurations)) {
+
+        if (!array_key_exists($sessionName, $this->getScreenshotConfiguration())) {
             throw new \LogicException(sprintf('The configuration for session \'%s\' is not defined.', $sessionName));
         }
         $screenshotParameters = $this->getScreenshotParameters();
 
-        $configuration = $this->screenshotCompareConfigurations[$sessionName];
+        $configuration = $this->getScreenshotConfiguration()[$sessionName];
 
         $sourceFilesystem = new SymfonyFilesystem();
 
