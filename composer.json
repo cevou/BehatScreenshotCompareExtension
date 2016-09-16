@@ -1,5 +1,5 @@
 {
-    "name": haringsrob/behat-screenshot-compare-extension",
+    "name": "haringsrob/behat-screenshot-compare-extension",
     "description": "Screenshot comparison extension for Behat",
     "type": "behat-extension",
     "keywords": ["behat", "bdd", "screenshot", "gui"],
