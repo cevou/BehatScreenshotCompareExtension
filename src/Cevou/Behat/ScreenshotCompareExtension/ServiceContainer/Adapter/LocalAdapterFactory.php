@@ -6,7 +6,8 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
-class LocalAdapterFactory implements AdapterFactory {
+class LocalAdapterFactory implements AdapterFactory
+{
 
     /**
      * {@inheritdoc}
@@ -34,9 +35,8 @@ class LocalAdapterFactory implements AdapterFactory {
     {
         $builder
             ->children()
-                ->scalarNode('directory')->isRequired()->end()
-                ->booleanNode('create')->defaultTrue()->end()
-            ->end()
-        ;
+            ->scalarNode('directory')->isRequired()->end()
+            ->booleanNode('create')->defaultTrue()->end()
+            ->end();
     }
 }

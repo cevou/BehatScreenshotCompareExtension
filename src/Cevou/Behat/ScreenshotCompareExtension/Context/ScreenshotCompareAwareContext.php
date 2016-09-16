@@ -20,5 +20,4 @@ interface ScreenshotCompareAwareContext extends Context
      * @param array $parameters
      */
     public function setScreenshotCompareParameters(array $parameters);
-
-} 
+}

@@ -24,5 +24,4 @@ class ScreenshotCompareAwareInitializerSpec extends ObjectBehavior
         $context->setScreenshotCompareParameters(array('screenshot_dir' => 'foo'))->shouldBeCalled();
         $this->initializeContext($context);
     }
-
-} 
+}

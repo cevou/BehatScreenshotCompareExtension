@@ -20,9 +20,12 @@ class ScreenshotCompareExtension implements ExtensionInterface
     /**
      * @var AdapterFactory[]
      */
-    private $adapterFactories = array();
+    private $adapterFactories = [];
 
-    function __construct()
+    /**
+     * ScreenshotCompareExtension constructor.
+     */
+    public function __construct()
     {
         $this->registerAdapterFactory(new LocalAdapterFactory());
         $this->registerAdapterFactory(new SafeLocalAdapterFactory());
@@ -61,18 +64,17 @@ class ScreenshotCompareExtension implements ExtensionInterface
         $builder
             ->addDefaultsIfNotSet()
             ->children()
-                ->scalarNode('screenshot_dir')->defaultValue('%paths.base%/features/screenshots')->end()
+            ->scalarNode('screenshot_dir')->defaultValue('%paths.base%/features/screenshots')->end()
             ->end()
-        ->end();
+            ->end();
 
         $adapterNodeBuilder = $builder
             ->children()
-                ->arrayNode('adapters')
-                    ->useAttributeAsKey('name')
-                    ->prototype('array')
-                    ->performNoDeepMerging()
-                    ->children()
-        ;
+            ->arrayNode('adapters')
+            ->useAttributeAsKey('name')
+            ->prototype('array')
+            ->performNoDeepMerging()
+            ->children();
 
         foreach ($this->adapterFactories as $name => $factory) {
             $factoryNode = $adapterNodeBuilder->arrayNode($name)->canBeUnset();
@@ -81,18 +83,28 @@ class ScreenshotCompareExtension implements ExtensionInterface
 
         $builder
             ->children()
-                ->arrayNode('sessions')
-                    ->useAttributeAsKey('name')
-                    ->prototype('array')
-                    ->children()
-                        ->scalarNode('adapter')->defaultValue('default')->end()
-                        ->arrayNode('crop')
-                            ->children()
-                                ->integerNode('left')->defaultValue(0)->min(0)->end()
-                                ->integerNode('right')->defaultValue(0)->min(0)->end()
-                                ->integerNode('top')->defaultValue(0)->min(0)->end()
-                                ->integerNode('bottom')->defaultValue(0)->min(0)->end();
+            ->arrayNode('screenshot_config')
+            ->children()
+            ->arrayNode('breakpoints')
+            ->useAttributeAsKey('name')
+            ->prototype('array')
+            ->children()
+            ->integerNode('width')->end()
+            ->integerNode('height')->end();
 
+        $builder
+            ->children()
+            ->arrayNode('sessions')
+            ->useAttributeAsKey('name')
+            ->prototype('array')
+            ->children()
+            ->scalarNode('adapter')->defaultValue('default')->end()
+            ->arrayNode('crop')
+            ->children()
+            ->integerNode('left')->defaultValue(0)->min(0)->end()
+            ->integerNode('right')->defaultValue(0)->min(0)->end()
+            ->integerNode('top')->defaultValue(0)->min(0)->end()
+            ->integerNode('bottom')->defaultValue(0)->min(0)->end();
     }
 
     /**
@@ -100,36 +112,37 @@ class ScreenshotCompareExtension implements ExtensionInterface
      */
     private function loadContextInitializer(ContainerBuilder $container)
     {
-        $definition = new Definition('Cevou\Behat\ScreenshotCompareExtension\Context\Initializer\ScreenshotCompareAwareInitializer', array(
+        $definition = new Definition('Cevou\Behat\ScreenshotCompareExtension\Context\Initializer\ScreenshotCompareAwareInitializer', [
             '%screenshot_compare.session_configurations%',
-            '%screenshot_compare.parameters%'
-        ));
-        $definition->addTag(ContextExtension::INITIALIZER_TAG, array('priority' => 0));
+            '%screenshot_compare.parameters%',
+        ]);
+        $definition->addTag(ContextExtension::INITIALIZER_TAG, ['priority' => 0]);
         $container->setDefinition('screenshot_compare.context_initializer', $definition);
     }
 
     /**
      * @param ContainerBuilder $container
      * @param array $config
+     *
      * @throws \LogicException
      */
     private function loadAdaptersAndCreateFilesystem(ContainerBuilder $container, array $config)
     {
-        $adapters = array();
+        $adapters = [];
 
         $id = 'gaufrette.screenshot_filesystem';
 
         foreach ($config['adapters'] as $name => $adapter) {
             $adapter_id = $id . '_' . $name;
             $adapter = $this->createAdapter($name, $adapter, $container, $this->adapterFactories);
-            $container->setDefinition($adapter_id, new Definition('Gaufrette\\Filesystem', array(new Reference($adapter))));
+            $container->setDefinition($adapter_id, new Definition('Gaufrette\\Filesystem', [new Reference($adapter)]));
             $adapters[$name] = new Reference($adapter_id);
         }
 
-        $sessionConfigurations = array();
+        $sessionConfigurations = [];
 
         foreach ($config['sessions'] as $name => $session) {
-            $sessionConfiguration = array();
+            $sessionConfiguration = [];
 
             if (!array_key_exists($session['adapter'], $adapters)) {
                 throw new \LogicException(sprintf('The adapter \'%s\' is not defined.', $session['adapter']));
@@ -149,12 +162,13 @@ class ScreenshotCompareExtension implements ExtensionInterface
      * @param array $config
      * @param ContainerBuilder $container
      * @param AdapterFactory[] $factories
+     *
      * @return string
      * @throws \LogicException
      */
     private function createAdapter($name, array $config, ContainerBuilder $container, array $factories)
     {
-        $adapter = null;
+        $adapter = NULL;
         foreach ($config as $key => $adapter) {
             if (array_key_exists($key, $factories)) {
                 $id = sprintf('gaufrette.%s_adapter', $name);

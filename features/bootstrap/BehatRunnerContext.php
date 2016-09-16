@@ -6,7 +6,11 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
-class BehatRunnerContext implements Context {
+/**
+ * Class BehatRunnerContext.
+ */
+class BehatRunnerContext implements Context
+{
 
     /**
      * @var string|null
@@ -45,6 +49,8 @@ class BehatRunnerContext implements Context {
 
     /**
      * @Given /^I configured the screenshot compare extension$/
+     *
+     * @todo: enforce browser_name: 'phantomjs'
      */
     public function iConfiguredTheScreenshotCompareExtension()
     {
@@ -65,6 +71,17 @@ default:
             top: 8
             bottom: 92
             right: 192
+      screenshot_config:
+        breakpoints:
+          desktop:
+            width: 1169
+            height: 500
+          tablet:
+            width: 960
+            height: 500
+          phone:
+            width: 560
+            height: 500
       adapters:
         default:
           local:
@@ -79,10 +96,11 @@ default:
 CONFIG;
 
         $content = new PyStringNode(explode("\n", $config), 0);
-        $this->getFilesystem()->dumpFile($this->workingDir.'/behat.yml', $content->getRaw());
+        $this->getFilesystem()->dumpFile($this->workingDir . '/behat.yml', $content->getRaw());
     }
 
     /**
+     * @codingStandardsIgnoreLine
      * @Given /^a feature file that opens the url "(?P<url>[^"]*)" and compares it to "(?P<file>[^"]*)" with tag "(?P<tag>[^"]*)"$/
      */
     public function aFeatureFileWhichOpensUrlAndComparesToScreenshotWithTag($url, $file, $tag)
@@ -96,9 +114,25 @@ Feature: Take a screenshot of an application and compare it with a previous take
     Then the screenshot should be equal to "$file"
 FEATURE;
 
-        $this->getFilesystem()->copy(__DIR__ . '/../screenshots/' . $file, $this->workingDir.'/features/screenshots/'.$file);
-        $content = new PyStringNode(explode("\n", $feature), 0);
-        $this->getFilesystem()->dumpFile($this->workingDir.'/features/compare_screenshot.feature', $content->getRaw());
+        $this->copyScreenshotAndFeature($feature);
+    }
+
+    /**
+     * @codingStandardsIgnoreLine
+     * @Given /^a feature file that opens the url "(?P<url>[^"]*)" and generates it to "(?P<file>[^"]*)"$/
+     */
+    public function aFeatureFileWhichOpensUrlAndGeneratesToScreenshotWithTag($url, $file)
+    {
+        $feature = <<<FEATURE
+Feature: Take a screenshot of an application and compare it with a previous taken screenshot
+
+  Scenario: Compare correct page with screenshot
+    Given I am on "$url"
+    Then I generate the screenshot "$file"
+    Then the screenshot should be equal to "$file"
+FEATURE;
+
+        $this->copyScreenshotAndFeature($feature);
     }
 
     /**
@@ -114,9 +148,7 @@ Feature: Take a screenshot of an application and compare it with a previous take
     Then the screenshot should be equal to "$file"
 FEATURE;
 
-        $this->getFilesystem()->copy(__DIR__ . '/../screenshots/' . $file, $this->workingDir.'/features/screenshots/'.$file);
-        $content = new PyStringNode(explode("\n", $feature), 0);
-        $this->getFilesystem()->dumpFile($this->workingDir.'/features/compare_screenshot.feature', $content->getRaw());
+        $this->copyScreenshotAndFeature($feature);
     }
 
     /**
@@ -130,7 +162,10 @@ FEATURE;
                 '%s %s %s %s',
                 $this->phpBin,
                 escapeshellarg(BEHAT_BIN_PATH),
-                strtr('--format-settings=\'{"timer": false}\'', array('\'' => '"', '"' => '\"')),
+                strtr('--format-settings=\'{"timer": false}\'', [
+                    '\'' => '"',
+                    '"' => '\"',
+                ]),
                 '--format=progress'
             )
         );
@@ -171,7 +206,7 @@ FEATURE;
      */
     private function getOutput()
     {
-        return $this->process->getErrorOutput().$this->process->getOutput();
+        return $this->process->getErrorOutput() . $this->process->getOutput();
     }
 
     /**
@@ -196,4 +231,19 @@ FEATURE;
 
         return $php;
     }
-} 
+
+    /**
+     * Copys the screenshot and feature.
+     *
+     * @param string $feature
+     *   The feature to use, as a string.
+     */
+    private function copyScreenshotAndFeature($feature)
+    {
+        $this->getFilesystem()
+            ->mirror(__DIR__ . '/../screenshots', $this->workingDir . '/features/screenshots');
+        $content = new PyStringNode(explode("\n", $feature), 0);
+        $this->getFilesystem()
+            ->dumpFile($this->workingDir . '/features/compare_screenshot.feature', $content->getRaw());
+    }
+}

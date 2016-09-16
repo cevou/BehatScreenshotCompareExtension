@@ -16,5 +16,4 @@ class ScreenshotCompareExtensionSpec extends ObjectBehavior
     {
         $this->getConfigKey()->shouldReturn('screenshot_compare');
     }
-
-} 
+}
